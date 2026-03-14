@@ -50,7 +50,7 @@ body {
 .search-box {
     position: relative;
     display: flex;
-    border-radius: 16px;
+    border-radius: 23px;
     height: 46px;
     align-items: center;
     background: rgba(255, 255, 255, 0.9) border-box;
