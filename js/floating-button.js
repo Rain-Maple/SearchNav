@@ -22,10 +22,19 @@ class FloatingTools extends HTMLElement {
           box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
           transition: transform 0.2s;
           font-size: 24px;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .tool-btn:hover {
           transform: scale(1.1) rotate(15deg);
+        }
+
+        .tool-btn:focus-visible {
+          outline: 2px solid white;
+          outline-offset: 2px;
         }
       </style>
 
