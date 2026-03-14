@@ -21,6 +21,7 @@ class FloatingTools extends HTMLElement {
           cursor: pointer;
           box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
           transition: transform 0.2s;
+          font-size: 24px;
         }
 
         .tool-btn:hover {
