@@ -1,7 +1,7 @@
 // weather-card.js
 // 功能：当前天气 + 空气质量(简评) + 逐小时预报 + 未来5日预报 + 日出日落
 // 默认地点：大连 (38.914, 121.6147)
-// 天地图 API Key 已内置，请务必在天地图控制台配置 HTTP Referer 白名单，防止盗用
+// 优先使用天地图反向地理编码，失败时自动回退到 Open‑Meteo Geocode API
 
 class WeatherCard extends HTMLElement {
     constructor() {
@@ -17,9 +17,6 @@ class WeatherCard extends HTMLElement {
         this._initDrag();
     }
 
-    // ---------- 天地图密钥 ----------
-    // ⚠️ 重要：请到 https://console.tianditu.gov.cn/ 为这个 Key 添加您的网站域名到 HTTP Referer 白名单
-    // 否则他人可能盗用该 Key。白名单示例：localhost、127.0.0.1、yourdomain.com
     static TIANDITU_KEY = '5205cd59204a6ef3187772bfb75d77cf';
 
     _initTemplate() {
@@ -36,7 +33,7 @@ class WeatherCard extends HTMLElement {
                     transform: translate(-50%, -50%);
                     z-index: 10000;
                     width: 90%;
-                    max-width: 520px;
+                    max-width: 520px;   /* 修改：卡片最大宽度改为520px */
                     min-width: 280px;
                     backdrop-filter: blur(8px);
                     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
@@ -74,18 +71,20 @@ class WeatherCard extends HTMLElement {
                 .close-btn {
                     background: rgba(0,0,0,0.1);
                     border: none;
-                    font-size: 1.2rem;
+                    font-size: 1.3rem;
                     cursor: pointer;
                     border-radius: 30px;
-                    width: 30px;
-                    height: 30px;
+                    width: 36px;        /* 增大点击区域 */
+                    height: 36px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     transition: 0.2s;
                     line-height: 1;
                     padding: 0;
+                    -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
                 }
+                .close-btn:active { background: rgba(0,0,0,0.25); } /* 触摸反馈 */
                 .close-btn:hover { background: rgba(0,0,0,0.2); color: #c0392b; }
 
                 .location-bar {
@@ -131,6 +130,7 @@ class WeatherCard extends HTMLElement {
                     font-size: 1.1rem;
                     transition: 0.2s;
                 }
+                .refresh-icon:active { background: rgba(44,124,182,0.4); }
                 .refresh-icon:hover { background: #2c7cb6; color: white; transform: rotate(25deg); }
 
                 .weather-dynamic {
@@ -139,6 +139,7 @@ class WeatherCard extends HTMLElement {
                     overflow-y: auto;
                 }
 
+                /* 当前天气区域：始终左右布局（不随屏幕变化而上下排列） */
                 .current-section {
                     display: flex;
                     flex-wrap: wrap;
@@ -150,6 +151,7 @@ class WeatherCard extends HTMLElement {
                     justify-content: space-between;
                     align-items: center;
                 }
+                /* 确保在大屏幕和小屏幕下都是水平排列，不变成 column */
                 .weather-main {
                     display: flex;
                     align-items: center;
@@ -198,6 +200,7 @@ class WeatherCard extends HTMLElement {
                     gap: 4px;
                 }
 
+                /* 右侧信息列：固定宽度，在小屏幕上缩小字体和内边距，但不改变布局方向 */
                 .info-column {
                     background: rgba(210, 230, 245, 0.6);
                     border-radius: 20px;
@@ -304,6 +307,7 @@ class WeatherCard extends HTMLElement {
                     color: #4a627a;
                 }
 
+                /* 移动端优化：仅调整间距、字体大小，不改变左右布局 */
                 @media (max-width: 640px) {
                     :host {
                         width: 95%;
@@ -314,6 +318,11 @@ class WeatherCard extends HTMLElement {
                     }
                     .title {
                         font-size: 1rem;
+                    }
+                    .close-btn {
+                        width: 34px;
+                        height: 34px;
+                        font-size: 1.2rem;
                     }
                     .location-bar {
                         padding: 8px 14px;
@@ -332,71 +341,85 @@ class WeatherCard extends HTMLElement {
                     .weather-dynamic {
                         padding: 0.6rem 0.8rem 1rem;
                     }
+                    /* 保持 current-section 为水平布局，不改为 column */
                     .current-section {
-                        flex-direction: column;
-                        align-items: stretch;
                         gap: 12px;
                         padding: 0.8rem;
                     }
                     .weather-main {
-                        gap: 12px;
+                        gap: 10px;
                     }
                     .big-icon {
-                        font-size: 2.6rem;
+                        font-size: 2.4rem;
                     }
                     .temp-box .temp {
-                        font-size: 2rem;
+                        font-size: 1.8rem;
                     }
-                    .info-column {
-                        flex-direction: row;
-                        flex-wrap: wrap;
-                        justify-content: space-between;
+                    .desc-badge {
+                        font-size: 0.7rem;
+                    }
+                    .sun-times {
+                        font-size: 0.65rem;
                         gap: 8px;
-                        min-width: auto;
+                    }
+                    /* 右侧信息列：缩小内边距和宽度 */
+                    .info-column {
+                        padding: 8px 12px;
+                        min-width: 100px;
+                        gap: 8px;
                     }
                     .info-row {
-                        flex: 1;
-                        min-width: 70px;
-                        justify-content: center;
-                        gap: 5px;
                         font-size: 0.7rem;
+                        gap: 8px;
                     }
                     .hour-card {
                         min-width: 60px;
+                        padding: 5px 3px;
                     }
                     .forecast-card {
                         min-width: 70px;
+                        padding: 6px 3px;
                     }
-                    .sun-times {
-                        font-size: 0.7rem;
-                        gap: 10px;
+                    .hour-icon {
+                        font-size: 1.2rem;
+                    }
+                    .forecast-icon {
+                        font-size: 1.4rem;
                     }
                 }
+                /* 小屏幕手机进一步压缩，但依然保持水平 */
                 @media (max-width: 480px) {
                     .info-column {
-                        flex-direction: column;
-                        align-items: stretch;
+                        min-width: 85px;
+                        padding: 6px 10px;
                     }
                     .info-row {
-                        justify-content: space-between;
+                        font-size: 0.65rem;
+                        gap: 6px;
+                    }
+                    .big-icon {
+                        font-size: 2rem;
+                    }
+                    .temp-box .temp {
+                        font-size: 1.6rem;
+                    }
+                    .desc-badge {
+                        font-size: 0.65rem;
+                        padding: 2px 8px;
                     }
                     .hour-card {
                         min-width: 55px;
-                        padding: 4px 3px;
-                    }
-                    .hour-icon {
-                        font-size: 1.1rem;
+                        font-size: 0.65rem;
                     }
                     .forecast-card {
                         min-width: 65px;
-                        padding: 6px 3px;
                     }
                 }
             </style>
 
             <div class="glass-card">
                 <div class="drag-header">
-                    <div class="title"><span>🌤️ 天气·空气</span></div>
+                    <div class="title">🌤️ 天气·空气</div>
                     <button class="close-btn" aria-label="关闭">✕</button>
                 </div>
                 <div class="location-bar">
@@ -432,10 +455,14 @@ class WeatherCard extends HTMLElement {
                 this._initLocationAndWeather();
             }
         });
-        this.$closeBtn.addEventListener('click', (e) => {
+        // 关闭按钮同时监听 click 和 touchstart，确保移动端有效，并阻止冒泡避免拖拽冲突
+        const closeHandler = (e) => {
             e.stopPropagation();
             this.remove();
-        });
+        };
+        this.$closeBtn.addEventListener('click', closeHandler);
+        this.$closeBtn.addEventListener('touchstart', closeHandler, { passive: false });
+        
         this._outsideClickHandler = (e) => {
             if (!this.contains(e.target) && !e.composedPath().includes(this)) {
                 this.remove();
@@ -450,6 +477,8 @@ class WeatherCard extends HTMLElement {
         let initialLeft = 0, initialTop = 0;
         let initialRect = null;
         const startDrag = (e) => {
+            // 如果点击的是关闭按钮或其内部，不启动拖拽
+            if (e.target.closest('.close-btn')) return;
             e.preventDefault();
             isDragging = true;
             const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
@@ -521,12 +550,11 @@ class WeatherCard extends HTMLElement {
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
         if (locationFailed) {
             this.$cityName.innerText = "大连 (默认)";
+        } else {
+            this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
         await this._loadWeatherData(lat, lon, false);
-        // 仅当城市名仍为默认“定位中...”或“大连 (默认)”时才尝试解析真实地名
-        if (this.$cityName.innerText === "定位中..." || this.$cityName.innerText === "大连 (默认)") {
-            this._fetchLocationName(lat, lon).catch(() => {});
-        }
+        this._fetchLocationName(lat, lon).catch(() => {});
     }
 
     _getUserPosition() {
@@ -749,38 +777,45 @@ class WeatherCard extends HTMLElement {
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
     }
 
-    // 使用天地图 API 进行反向地理编码
     async _fetchLocationName(lat, lon) {
-        const key = WeatherCard.TIANDITU_KEY;
-        // 注意：必须为这个 Key 配置 HTTP Referer 白名单，否则请求会被拒绝
-        const url = `https://api.tianditu.gov.cn/geocoder?postStr={"lon":${lon},"lat":${lat},"ver":1}&type=geocode&tk=${key}`;
+        // 尝试天地图
         try {
+            const key = WeatherCard.TIANDITU_KEY;
+            const url = `https://api.tianditu.gov.cn/geocoder?postStr={"lon":${lon},"lat":${lat},"ver":1}&type=geocode&tk=${key}`;
             const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
-            if (data && data.status === "0" && data.result) {
-                const result = data.result;
-                let cityName = "";
-                if (result.formatted_address) {
-                    cityName = result.formatted_address;
-                } else if (result.addressComponent) {
-                    const comp = result.addressComponent;
-                    cityName = [comp.city, comp.district].filter(Boolean).join("");
-                    if (!cityName && comp.province) cityName = comp.province;
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.status === "0" && data.result) {
+                    let cityName = data.result.formatted_address || (data.result.addressComponent?.city + data.result.addressComponent?.district) || null;
+                    if (cityName && cityName !== "undefinedundefined") {
+                        cityName = cityName.length > 20 ? cityName.slice(0, 18) + ".." : cityName;
+                        this.$cityName.innerText = cityName;
+                        return;
+                    }
                 }
-                if (cityName && cityName !== "undefinedundefined") {
-                    // 限制长度
-                    cityName = cityName.length > 20 ? cityName.slice(0, 18) + ".." : cityName;
-                    this.$cityName.innerText = cityName;
-                } else {
-                    this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
-                }
-            } else {
-                console.warn("天地图返回失败", data);
-                this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
             }
+            console.warn("天地图失败，回退到 Open-Meteo");
+        } catch (e) {
+            console.warn("天地图异常:", e);
+        }
+
+        // 备用：Open-Meteo Geocode
+        try {
+            const geoUrl = `https://api.open-meteo.com/v1/geocode?latitude=${lat}&longitude=${lon}&count=1&language=zh`;
+            const resp = await fetch(geoUrl);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.results && data.results.length > 0) {
+                    const loc = data.results[0];
+                    let full = (loc.name || '') + (loc.admin1 ? `, ${loc.admin1}` : '') + (loc.country ? `, ${loc.country}` : '');
+                    if (full.length > 28) full = full.slice(0, 26) + '..';
+                    this.$cityName.innerText = full;
+                    return;
+                }
+            }
+            this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         } catch (err) {
-            console.error("天地图请求异常", err);
+            console.error("地理编码失败:", err);
             this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
     }
