@@ -36,7 +36,7 @@ class WeatherCard extends HTMLElement {
                     transform: translate(-50%, -50%);
                     z-index: 10000;
                     width: 90%;
-                    max-width: 560px;
+                    max-width: 520px;
                     min-width: 280px;
                     backdrop-filter: blur(8px);
                     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
