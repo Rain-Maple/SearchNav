@@ -33,7 +33,7 @@ class WeatherCard extends HTMLElement {
                     transform: translate(-50%, -50%);
                     z-index: 10000;
                     width: 90%;
-                    max-width: 520px;   /* 修改：卡片最大宽度改为520px */
+                    max-width: 520px;
                     min-width: 280px;
                     backdrop-filter: blur(8px);
                     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
@@ -74,7 +74,7 @@ class WeatherCard extends HTMLElement {
                     font-size: 1.3rem;
                     cursor: pointer;
                     border-radius: 30px;
-                    width: 36px;        /* 增大点击区域 */
+                    width: 36px;
                     height: 36px;
                     display: flex;
                     align-items: center;
@@ -82,9 +82,9 @@ class WeatherCard extends HTMLElement {
                     transition: 0.2s;
                     line-height: 1;
                     padding: 0;
-                    -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+                    -webkit-tap-highlight-color: transparent;
                 }
-                .close-btn:active { background: rgba(0,0,0,0.25); } /* 触摸反馈 */
+                .close-btn:active { background: rgba(0,0,0,0.25); }
                 .close-btn:hover { background: rgba(0,0,0,0.2); color: #c0392b; }
 
                 .location-bar {
@@ -151,7 +151,6 @@ class WeatherCard extends HTMLElement {
                     justify-content: space-between;
                     align-items: center;
                 }
-                /* 确保在大屏幕和小屏幕下都是水平排列，不变成 column */
                 .weather-main {
                     display: flex;
                     align-items: center;
@@ -200,7 +199,6 @@ class WeatherCard extends HTMLElement {
                     gap: 4px;
                 }
 
-                /* 右侧信息列：固定宽度，在小屏幕上缩小字体和内边距，但不改变布局方向 */
                 .info-column {
                     background: rgba(210, 230, 245, 0.6);
                     border-radius: 20px;
@@ -307,7 +305,6 @@ class WeatherCard extends HTMLElement {
                     color: #4a627a;
                 }
 
-                /* 移动端优化：仅调整间距、字体大小，不改变左右布局 */
                 @media (max-width: 640px) {
                     :host {
                         width: 95%;
@@ -341,7 +338,6 @@ class WeatherCard extends HTMLElement {
                     .weather-dynamic {
                         padding: 0.6rem 0.8rem 1rem;
                     }
-                    /* 保持 current-section 为水平布局，不改为 column */
                     .current-section {
                         gap: 12px;
                         padding: 0.8rem;
@@ -362,7 +358,6 @@ class WeatherCard extends HTMLElement {
                         font-size: 0.65rem;
                         gap: 8px;
                     }
-                    /* 右侧信息列：缩小内边距和宽度 */
                     .info-column {
                         padding: 8px 12px;
                         min-width: 100px;
@@ -387,7 +382,6 @@ class WeatherCard extends HTMLElement {
                         font-size: 1.4rem;
                     }
                 }
-                /* 小屏幕手机进一步压缩，但依然保持水平 */
                 @media (max-width: 480px) {
                     .info-column {
                         min-width: 85px;
@@ -419,7 +413,7 @@ class WeatherCard extends HTMLElement {
 
             <div class="glass-card">
                 <div class="drag-header">
-                    <div class="title">🌤️ 天气·空气</div>
+                    <div class="title">🌤️ 天气预报</div>
                     <button class="close-btn" aria-label="关闭">✕</button>
                 </div>
                 <div class="location-bar">
