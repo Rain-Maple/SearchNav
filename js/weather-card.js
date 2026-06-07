@@ -746,9 +746,9 @@ class WeatherCard extends HTMLElement {
         this.$content.innerHTML = mainCurrent + hourlyHtml + forecastHtml;
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
         // 如果城市名还是“定位中...”，且坐标已显示，则回退显示坐标
-        if (this.$cityName.innerText === "定位中...") {
-            this.$cityName.innerText = `📍 ${lat.toFixed(1)},${lon.toFixed(1)}`;
-        }
+        //if (this.$cityName.innerText === "定位中...") {
+        //    this.$cityName.innerText = `📍 ${lat.toFixed(1)},${lon.toFixed(1)}`;
+        //}
     }
 
     async _fetchLocationName(lat, lon) {
@@ -767,17 +767,17 @@ class WeatherCard extends HTMLElement {
                     if (this.$cityName) this.$cityName.innerText = full || '未知地点';
                 } else {
                     if (this.$cityName && this.$cityName.innerText === "定位中...") {
-                        this.$cityName.innerText = `📍 ${lat.toFixed(1)},${lon.toFixed(1)}`;
+                        this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
                     }
                 }
             } else {
                 if (this.$cityName && this.$cityName.innerText === "定位中...") {
-                    this.$cityName.innerText = `📍 ${lat.toFixed(1)},${lon.toFixed(1)}`;
+                    this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
                 }
             }
         } catch(e) {
             if (this.$cityName && this.$cityName.innerText === "定位中...") {
-                this.$cityName.innerText = `📍 ${lat.toFixed(1)},${lon.toFixed(1)}`;
+                this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
             }
         }
     }
