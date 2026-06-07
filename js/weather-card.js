@@ -1,6 +1,8 @@
 // weather-card.js
 // 功能：当前天气 + 空气质量(简评) + 逐小时预报 + 未来5日预报 + 日出日落
 // 默认地点：大连 (38.914, 121.6147)
+// 天地图 API Key 已内置，请务必在天地图控制台配置 HTTP Referer 白名单，防止盗用
+
 class WeatherCard extends HTMLElement {
     constructor() {
         super();
@@ -14,6 +16,11 @@ class WeatherCard extends HTMLElement {
         this._initEventListeners();
         this._initDrag();
     }
+
+    // ---------- 天地图密钥 ----------
+    // ⚠️ 重要：请到 https://console.tianditu.gov.cn/ 为这个 Key 添加您的网站域名到 HTTP Referer 白名单
+    // 否则他人可能盗用该 Key。白名单示例：localhost、127.0.0.1、yourdomain.com
+    static TIANDITU_KEY = '5205cd59204a6ef3187772bfb75d77cf';
 
     _initTemplate() {
         this.shadowRoot.innerHTML = `
@@ -29,7 +36,7 @@ class WeatherCard extends HTMLElement {
                     transform: translate(-50%, -50%);
                     z-index: 10000;
                     width: 90%;
-                    max-width: 520px;
+                    max-width: 960px;
                     min-width: 280px;
                     backdrop-filter: blur(8px);
                     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
@@ -132,7 +139,6 @@ class WeatherCard extends HTMLElement {
                     overflow-y: auto;
                 }
 
-                /* 当前天气区域 */
                 .current-section {
                     display: flex;
                     flex-wrap: wrap;
@@ -151,7 +157,6 @@ class WeatherCard extends HTMLElement {
                     flex-wrap: wrap;
                     flex: 2;
                 }
-                /* 去除图标底纹 */
                 .big-icon {
                     font-size: 3.2rem;
                     width: auto;
@@ -193,7 +198,6 @@ class WeatherCard extends HTMLElement {
                     gap: 4px;
                 }
 
-                /* 右侧垂直信息栏 */
                 .info-column {
                     background: rgba(210, 230, 245, 0.6);
                     border-radius: 20px;
@@ -300,7 +304,6 @@ class WeatherCard extends HTMLElement {
                     color: #4a627a;
                 }
 
-                /* 移动端优化 */
                 @media (max-width: 640px) {
                     :host {
                         width: 95%;
@@ -393,12 +396,11 @@ class WeatherCard extends HTMLElement {
 
             <div class="glass-card">
                 <div class="drag-header">
-                    <div class="title"><span>🌤️ 天气预报</span></div>
+                    <div class="title"><span>🌤️ 天气·空气</span></div>
                     <button class="close-btn" aria-label="关闭">✕</button>
                 </div>
                 <div class="location-bar">
                     <div class="location-info">
-                        <span>📍</span>
                         <span class="city-name" id="cityName">定位中...</span>
                         <span class="coords" id="coordsText">--,--</span>
                     </div>
@@ -517,13 +519,14 @@ class WeatherCard extends HTMLElement {
         this.currentLat = lat;
         this.currentLon = lon;
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
-        // 如果定位失败，立即显示默认城市名，避免一直“定位中”
         if (locationFailed) {
             this.$cityName.innerText = "大连 (默认)";
         }
         await this._loadWeatherData(lat, lon, false);
-        // 异步获取精确地名，不影响主要天气显示
-        this._fetchLocationName(lat, lon).catch(() => {});
+        // 仅当城市名仍为默认“定位中...”或“大连 (默认)”时才尝试解析真实地名
+        if (this.$cityName.innerText === "定位中..." || this.$cityName.innerText === "大连 (默认)") {
+            this._fetchLocationName(lat, lon).catch(() => {});
+        }
     }
 
     _getUserPosition() {
@@ -568,7 +571,6 @@ class WeatherCard extends HTMLElement {
         }
     }
 
-    // 风速(km/h) 转 级数
     _kmhToBeaufort(kmh) {
         const ms = kmh / 3.6;
         if (ms < 0.3) return 0;
@@ -745,40 +747,41 @@ class WeatherCard extends HTMLElement {
 
         this.$content.innerHTML = mainCurrent + hourlyHtml + forecastHtml;
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
-        // 如果城市名还是“定位中...”，且坐标已显示，则回退显示坐标
-        //if (this.$cityName.innerText === "定位中...") {
-        //    this.$cityName.innerText = `📍 ${lat.toFixed(1)},${lon.toFixed(1)}`;
-        //}
     }
 
+    // 使用天地图 API 进行反向地理编码
     async _fetchLocationName(lat, lon) {
+        const key = WeatherCard.TIANDITU_KEY;
+        // 注意：必须为这个 Key 配置 HTTP Referer 白名单，否则请求会被拒绝
+        const url = `https://api.tianditu.gov.cn/geocoder?postStr={"lon":${lon},"lat":${lat},"ver":1}&type=geocode&tk=${key}`;
         try {
-            const geoUrl = `https://api.open-meteo.com/v1/geocode?latitude=${lat}&longitude=${lon}&count=1&language=zh`;
-            const resp = await fetch(geoUrl);
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data.results && data.results.length) {
-                    const loc = data.results[0];
-                    let name = loc.name || '';
-                    let region = loc.admin1 ? `, ${loc.admin1}` : '';
-                    let country = loc.country ? `, ${loc.country}` : '';
-                    let full = name + region + country;
-                    if (full.length > 28) full = full.slice(0, 26) + '..';
-                    if (this.$cityName) this.$cityName.innerText = full || '未知地点';
-                } else {
-                    if (this.$cityName && this.$cityName.innerText === "定位中...") {
-                        this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
-                    }
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            if (data && data.status === "0" && data.result) {
+                const result = data.result;
+                let cityName = "";
+                if (result.formatted_address) {
+                    cityName = result.formatted_address;
+                } else if (result.addressComponent) {
+                    const comp = result.addressComponent;
+                    cityName = [comp.city, comp.district].filter(Boolean).join("");
+                    if (!cityName && comp.province) cityName = comp.province;
                 }
-            } else {
-                if (this.$cityName && this.$cityName.innerText === "定位中...") {
+                if (cityName && cityName !== "undefinedundefined") {
+                    // 限制长度
+                    cityName = cityName.length > 20 ? cityName.slice(0, 18) + ".." : cityName;
+                    this.$cityName.innerText = cityName;
+                } else {
                     this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
                 }
-            }
-        } catch(e) {
-            if (this.$cityName && this.$cityName.innerText === "定位中...") {
+            } else {
+                console.warn("天地图返回失败", data);
                 this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
             }
+        } catch (err) {
+            console.error("天地图请求异常", err);
+            this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
     }
 }
