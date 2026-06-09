@@ -8,7 +8,8 @@ class WeatherFloatBtn extends HTMLElement {
             <style>
                 :host {
                     position: fixed;
-                    top: 20px;
+                    // top: 20px;
+                    bottom: 30px;
                     left: 20px;
                     z-index: 10001;
                     display: block;
@@ -17,7 +18,7 @@ class WeatherFloatBtn extends HTMLElement {
                     width: 54px;
                     height: 54px;
                     border-radius: 50%;
-                    background: linear-gradient(135deg, #2c7cb6, #1e5a88);
+                    background: #2196F3;
                     border: none;
                     color: white;
                     font-size: 28px;
@@ -27,10 +28,11 @@ class WeatherFloatBtn extends HTMLElement {
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    line-height: 1;
+                    padding: 0;
                 }
                 .float-weather-btn:hover {
                     transform: scale(1.08) rotate(3deg);
-                    background: #4290c2;
                 }
                 @media (max-width: 500px) {
                     .float-weather-btn { width: 48px; height: 48px; font-size: 26px; top: 12px; left: 12px; }
