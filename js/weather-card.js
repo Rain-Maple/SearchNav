@@ -110,7 +110,7 @@ class WeatherCard extends HTMLElement {
                 }
                 .city-name {
                     font-weight: 600;
-                    background: rgba(44,124,182,0.15);
+                    background: rgba(228, 228, 228, 0.66);
                     padding: 4px 12px;
                     border-radius: 30px;
                     color: #1f3a5f;
@@ -203,7 +203,7 @@ class WeatherCard extends HTMLElement {
                     color: #2a5a7c;
                 }
                 .desc-badge {
-                    background: #eef2fa;
+                    background: rgba(228, 228, 228, 0.66);
                     display: inline-block;
                     padding: 3px 10px;
                     border-radius: 30px;
@@ -225,7 +225,7 @@ class WeatherCard extends HTMLElement {
                 }
 
                 .info-column {
-                    background: rgba(210, 230, 245, 0.6);
+                    background: rgba(228, 228, 228, 0.66);
                     border-radius: 20px;
                     padding: 10px 16px;
                     min-width: 120px;

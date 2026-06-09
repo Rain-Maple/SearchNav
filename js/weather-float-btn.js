@@ -8,7 +8,6 @@ class WeatherFloatBtn extends HTMLElement {
             <style>
                 :host {
                     position: fixed;
-                    // top: 20px;
                     bottom: 30px;
                     left: 20px;
                     z-index: 10001;

@@ -61,9 +61,8 @@ class PasswordGenerator extends HTMLElement {
             line-height: 1;
         }
 
-        .close-btn:hover {
-            color: #000;
-        }
+        .close-btn:active { background: rgba(0,0,0,0.25); }
+        .close-btn:hover { background: rgba(0,0,0,0); color: #c0392b; }
 
         .result-area {
           position: relative;
