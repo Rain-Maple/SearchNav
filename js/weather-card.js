@@ -25,7 +25,7 @@ class WeatherCard extends HTMLElement {
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
-                    --primary-color: #2c7cb6;
+                    --primary-color: #0d528a;
                     --card-bg: rgba(255, 255, 255, 0.66);
                     --border-radius: 24px;
                     display: block;
@@ -62,15 +62,15 @@ class WeatherCard extends HTMLElement {
 
                 .title {
                     font-weight: 700;
-                    font-size: 1.1rem;
-                    color: #1e3a5f;
+                    font-size: 20px;
+                    color: var(--primary-color);
                     display: flex;
                     align-items: center;
                     gap: 6px;
                 }
 
                 .close-btn {
-                    background: rgba(0,0,0,0.1);
+                    background: rgba(0, 0, 0, 0);
                     border: none;
                     font-size: 1.3rem;
                     cursor: pointer;
@@ -86,7 +86,7 @@ class WeatherCard extends HTMLElement {
                     -webkit-tap-highlight-color: transparent;
                 }
                 .close-btn:active { background: rgba(0,0,0,0.25); }
-                .close-btn:hover { background: rgba(0,0,0,0.2); color: #c0392b; }
+                .close-btn:hover { background: rgba(0,0,0,0); color: #c0392b; }
 
                 .location-bar {
                     display: flex;
@@ -146,7 +146,7 @@ class WeatherCard extends HTMLElement {
                     white-space: nowrap;
                 }
                 .refresh-icon {
-                    background: rgba(44,124,182,0.15);
+                    background: rgba(44,124,182,0);
                     border: none;
                     border-radius: 50%;
                     width: 32px;
@@ -156,8 +156,8 @@ class WeatherCard extends HTMLElement {
                     transition: 0.2s;
                     flex-shrink: 0;
                 }
-                .refresh-icon:active { background: rgba(44,124,182,0.4); }
-                .refresh-icon:hover { background: #2c7cb6; color: white; transform: rotate(25deg); }
+                .refresh-icon:active { background: rgba(44,124,182,0); }
+                .refresh-icon:hover { background: rgba(0,0,0,0); transform: rotate(25deg); }
 
                 .weather-dynamic {
                     padding: 0.8rem 1rem 1.2rem;
