@@ -25,7 +25,7 @@ class WeatherCard extends HTMLElement {
             <style>
                 :host {
                     --primary-color: #2c7cb6;
-                    --card-bg: rgba(255, 255, 255, 0.76);
+                    --card-bg: rgba(255, 255, 255, 0.92);
                     --border-radius: 24px;
                     display: block;
                     position: fixed;
@@ -54,7 +54,7 @@ class WeatherCard extends HTMLElement {
                     justify-content: space-between;
                     align-items: center;
                     padding: 12px 18px;
-                    background: rgba(5, 109, 206, 0.62);
+                    background: rgba(44, 124, 182, 0.15);
                     cursor: move;
                     border-bottom: 1px solid rgba(255,255,255,0.3);
                     user-select: none;
@@ -165,6 +165,7 @@ class WeatherCard extends HTMLElement {
                     overflow-y: auto;
                 }
 
+                /* 当前天气区域：始终左右布局（不随屏幕变化而上下排列） */
                 .current-section {
                     display: flex;
                     flex-wrap: wrap;
