@@ -105,8 +105,8 @@ class WeatherCard extends HTMLElement {
                     gap: 10px;
                     font-size: 0.85rem;
                     flex: 1;
-                    min-width: 0;          /* 允许子元素溢出时收缩 */
-                    overflow: hidden;      /* 隐藏溢出内容，配合内部滚动 */
+                    min-width: 0;
+                    overflow: hidden;
                 }
                 .city-name {
                     font-weight: 600;
@@ -117,10 +117,9 @@ class WeatherCard extends HTMLElement {
                     display: inline-block;
                     line-height: 1.2;
                     white-space: nowrap;
-                    max-width: 100%;
+                    width: 9ch;
                     overflow: hidden;
                     text-overflow: clip;
-                    /* 自动滚动时禁用默认省略号 */
                 }
                 /* 自动滚动动画 */
                 .city-name.auto-scroll {
@@ -687,23 +686,16 @@ class WeatherCard extends HTMLElement {
 
     _checkCityNameOverflow() {
         if (!this.$cityName) return;
-        // 短暂延迟，确保元素已渲染出尺寸
-        setTimeout(() => {
-            const el = this.$cityName;
-            const parent = el.parentElement;
-            if (!parent) return;
-            // 获取父容器允许的最大宽度（.location-info 的宽度减去 coords 的宽度）
-            const parentWidth = parent.clientWidth;
-            const coords = this.shadowRoot.querySelector('.coords');
-            const coordsWidth = coords ? coords.offsetWidth : 0;
-            const availableWidth = parentWidth - coordsWidth - 10; // 减去 gap
-            const textWidth = el.scrollWidth;
-            if (textWidth > availableWidth) {
-                el.classList.add('auto-scroll');
-            } else {
-                el.classList.remove('auto-scroll');
-            }
-        }, 50);
+        const el = this.$cityName;
+        // 获取元素的 clientWidth（即固定宽度 9ch 的实际像素值）
+        const containerWidth = el.clientWidth;
+        // 获取文本内容的实际滚动宽度
+        const textWidth = el.scrollWidth;
+        if (textWidth > containerWidth) {
+            el.classList.add('auto-scroll');
+        } else {
+            el.classList.remove('auto-scroll');
+        }
     }
 
     _renderFullUI(current, hourly, daily, lat, lon) {
