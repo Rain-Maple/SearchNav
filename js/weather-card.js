@@ -2,8 +2,7 @@
 // 功能：当前天气 + 空气质量(简评) + 逐小时预报 + 未来5日预报 + 日出日落
 // 默认地点：北京 (39.9042, 116.4074)
 // 优先使用天地图反向地理编码，失败时自动回退到 Open‑Meteo Geocode API
-// 城市名过长时自动滚动显示（固定9字符宽度）
-// 逐小时/五日预报滚动条隐藏，支持鼠标拖拽滚动
+// 城市名过长时自动滚动显示
 
 class WeatherCard extends HTMLElement {
     constructor() {
@@ -264,13 +263,8 @@ class WeatherCard extends HTMLElement {
                     overflow-x: auto;
                     gap: 10px;
                     padding: 6px 2px 10px;
+                    scrollbar-width: thin;
                     -webkit-overflow-scrolling: touch;
-                    scrollbar-width: none;      /* Firefox */
-                    -ms-overflow-style: none;   /* IE/Edge */
-                    cursor: grab;
-                }
-                .hourly-scroll::-webkit-scrollbar, .forecast-scroll::-webkit-scrollbar {
-                    display: none;              /* Chrome/Safari/Opera */
                 }
                 .hour-card, .forecast-card {
                     background: white;
@@ -497,9 +491,6 @@ class WeatherCard extends HTMLElement {
             }
         };
         setTimeout(() => document.addEventListener('click', this._outsideClickHandler), 100);
-
-        // 添加拖拽滚动支持（隐藏滚动条后可用鼠标拖拽）
-        this._initDragScroll();
     }
 
     _initDrag() {
@@ -551,46 +542,6 @@ class WeatherCard extends HTMLElement {
             this.$dragHeader.addEventListener('mousedown', startDrag);
             this.$dragHeader.addEventListener('touchstart', startDrag, { passive: false });
         }
-    }
-
-    _initDragScroll() {
-        const scrollContainers = ['.hourly-scroll', '.forecast-scroll'];
-        scrollContainers.forEach(selector => {
-            const container = this.shadowRoot.querySelector(selector);
-            if (!container) return;
-
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            container.addEventListener('mousedown', (e) => {
-                isDown = true;
-                startX = e.pageX - container.offsetLeft;
-                scrollLeft = container.scrollLeft;
-                container.style.cursor = 'grabbing';
-                e.preventDefault();
-            });
-
-            container.addEventListener('mouseleave', () => {
-                isDown = false;
-                container.style.cursor = 'grab';
-            });
-
-            container.addEventListener('mouseup', () => {
-                isDown = false;
-                container.style.cursor = 'grab';
-            });
-
-            container.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - container.offsetLeft;
-                const walk = (x - startX) * 1.5;
-                container.scrollLeft = scrollLeft - walk;
-            });
-
-            container.style.cursor = 'grab';
-        });
     }
 
     async connectedCallback() {
