@@ -134,13 +134,12 @@ class WeatherCard extends HTMLElement {
                         transform: translateX(0);
                     }
                     80% {
-                        transform: translateX(calc(-100% + 100%));  /* 滚动到末端 */
+                        transform: translateX(calc(-100% + 9ch));
                     }
                     100% {
-                        transform: translateX(calc(-100% + 100%));
+                        transform: translateX(calc(-100% + 9ch));
                     }
                 }
-                /* 保证滚动时文字可读，不影响交互 */
                 .city-name.auto-scroll:hover {
                     animation-play-state: paused;
                 }
