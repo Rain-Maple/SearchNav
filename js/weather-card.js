@@ -26,7 +26,7 @@ class WeatherCard extends HTMLElement {
             <style>
                 :host {
                     --primary-color: #2c7cb6;
-                    --card-bg: rgba(255, 255, 255, 0.76);
+                    --card-bg: rgba(255, 255, 255, 0.66);
                     --border-radius: 24px;
                     display: block;
                     position: fixed;
@@ -55,7 +55,6 @@ class WeatherCard extends HTMLElement {
                     justify-content: space-between;
                     align-items: center;
                     padding: 12px 18px;
-                    background: rgba(5, 109, 206, 0.62);
                     cursor: move;
                     border-bottom: 1px solid rgba(255,255,255,0.3);
                     user-select: none;
@@ -559,45 +558,109 @@ class WeatherCard extends HTMLElement {
             const container = this.shadowRoot.querySelector(selector);
             if (!container) return;
 
-            // 移除旧监听避免重复（简单起见，每次重新绑定前先解绑）
-            const newContainer = container.cloneNode(true);
-            container.parentNode.replaceChild(newContainer, container);
-            // 重新获取新容器
-            const freshContainer = this.shadowRoot.querySelector(selector);
-            if (!freshContainer) return;
-
+            // 移除旧监听避免重复（简单起见，先解绑再重新绑定，保留原容器）
+            // 使用事件监听选项，确保不会重复添加
             let isDown = false;
-            let startX;
-            let scrollLeft;
+            let startX = 0;
+            let scrollLeft = 0;
+            let startTime = 0;
+            let velocity = 0;
+            let lastX = 0;
+            let lastTime = 0;
+            let inertiaFrame = null;
+
+            const stopInertia = () => {
+                if (inertiaFrame) {
+                    cancelAnimationFrame(inertiaFrame);
+                    inertiaFrame = null;
+                }
+            };
 
             const onMouseDown = (e) => {
+                stopInertia();
                 isDown = true;
-                startX = e.pageX - freshContainer.offsetLeft;
-                scrollLeft = freshContainer.scrollLeft;
-                freshContainer.style.cursor = 'grabbing';
+                startX = e.pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+                startTime = Date.now();
+                lastX = startX;
+                lastTime = startTime;
+                velocity = 0;
+                container.style.cursor = 'grabbing';
                 e.preventDefault();
             };
-            const onMouseLeave = () => {
-                isDown = false;
-                freshContainer.style.cursor = 'grab';
-            };
-            const onMouseUp = () => {
-                isDown = false;
-                freshContainer.style.cursor = 'grab';
-            };
+
             const onMouseMove = (e) => {
                 if (!isDown) return;
                 e.preventDefault();
-                const x = e.pageX - freshContainer.offsetLeft;
+                const x = e.pageX - container.offsetLeft;
+                const now = Date.now();
+                const dx = x - lastX;
+                const dt = Math.max(1, now - lastTime);
+                velocity = dx / dt; // 像素/毫秒
+                lastX = x;
+                lastTime = now;
                 const walk = (x - startX) * 1.5;
-                freshContainer.scrollLeft = scrollLeft - walk;
+                container.scrollLeft = scrollLeft - walk;
             };
 
-            freshContainer.addEventListener('mousedown', onMouseDown);
-            freshContainer.addEventListener('mouseleave', onMouseLeave);
-            freshContainer.addEventListener('mouseup', onMouseUp);
-            freshContainer.addEventListener('mousemove', onMouseMove);
-            freshContainer.style.cursor = 'grab';
+            const onMouseUp = () => {
+                if (!isDown) return;
+                isDown = false;
+                container.style.cursor = 'grab';
+                // 惯性滚动
+                if (Math.abs(velocity) < 0.02) return;
+                let lastScrollLeft = container.scrollLeft;
+                let lastTimestamp = performance.now();
+                let vel = velocity * 100; // 调整系数，控制惯性距离
+                const decay = 0.95; // 衰减系数
+                const minVel = 0.5;   // 最小速度阈值
+
+                const step = (now) => {
+                    if (!container.isConnected) {
+                        inertiaFrame = null;
+                        return;
+                    }
+                    let dt = Math.min(50, now - lastTimestamp);
+                    if (dt < 5) {
+                        inertiaFrame = requestAnimationFrame(step);
+                        return;
+                    }
+                    lastTimestamp = now;
+                    vel *= Math.pow(decay, dt / 16);
+                    if (Math.abs(vel) < minVel) {
+                        inertiaFrame = null;
+                        return;
+                    }
+                    container.scrollLeft -= vel * (dt / 16);
+                    // 边界检查（可选，到达边界时停止）
+                    if (container.scrollLeft <= 0 || container.scrollLeft >= container.scrollWidth - container.clientWidth) {
+                        inertiaFrame = null;
+                        return;
+                    }
+                    inertiaFrame = requestAnimationFrame(step);
+                };
+                inertiaFrame = requestAnimationFrame((t) => {
+                    lastTimestamp = t;
+                    step(t);
+                });
+            };
+
+            const onMouseLeave = () => {
+                if (isDown) {
+                    onMouseUp();
+                }
+            };
+
+            // 移除可能存在的旧监听（避免重复绑定）
+            container.removeEventListener('mousedown', onMouseDown);
+            container.removeEventListener('mousemove', onMouseMove);
+            container.removeEventListener('mouseup', onMouseUp);
+            container.removeEventListener('mouseleave', onMouseLeave);
+            container.addEventListener('mousedown', onMouseDown);
+            container.addEventListener('mousemove', onMouseMove);
+            container.addEventListener('mouseup', onMouseUp);
+            container.addEventListener('mouseleave', onMouseLeave);
+            container.style.cursor = 'grab';
         });
     }
 
