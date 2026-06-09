@@ -121,24 +121,19 @@ class WeatherCard extends HTMLElement {
                     overflow: hidden;
                     text-overflow: clip;
                 }
-                /* 自动滚动动画 */
-                .city-name.auto-scroll {
+                .city-name-text {
+                    display: inline-block;
+                    white-space: nowrap;
+                    transform: translateX(0);
+                }
+                .city-name-text.auto-scroll {
                     animation: scrollText 10s linear infinite;
-                    padding-right: 20px;   /* 避免末尾紧贴边缘 */
                 }
                 @keyframes scrollText {
-                    0% {
-                        transform: translateX(0);
-                    }
-                    20% {
-                        transform: translateX(0);
-                    }
-                    80% {
-                        transform: translateX(calc(-100% + 9ch));
-                    }
-                    100% {
-                        transform: translateX(calc(-100% + 9ch));
-                    }
+                    0% { transform: translateX(0); }
+                    20% { transform: translateX(0); }
+                    80% { transform: translateX(calc(-100% + 9ch)); }
+                    100% { transform: translateX(calc(-100% + 9ch)); }
                 }
                 .city-name.auto-scroll:hover {
                     animation-play-state: paused;
@@ -448,7 +443,9 @@ class WeatherCard extends HTMLElement {
                 </div>
                 <div class="location-bar">
                     <div class="location-info">
-                        <span class="city-name" id="cityName">定位中...</span>
+                        <span class="city-name" id="cityName">
+                            <span class="city-name-text">定位中...</span>
+                        </span>
                         <span class="coords" id="coordsText">--,--</span>
                     </div>
                     <button class="refresh-icon" id="refreshWeatherBtn" title="刷新">⟳</button>
@@ -463,6 +460,7 @@ class WeatherCard extends HTMLElement {
 
     _initElements() {
         this.$cityName = this.shadowRoot.getElementById('cityName');
+        this.$cityNameText = this.shadowRoot.querySelector('.city-name-text');
         this.$coordsText = this.shadowRoot.getElementById('coordsText');
         this.$refreshBtn = this.shadowRoot.getElementById('refreshWeatherBtn');
         this.$closeBtn = this.shadowRoot.querySelector('.close-btn');
@@ -574,9 +572,9 @@ class WeatherCard extends HTMLElement {
         this.currentLon = lon;
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
         if (locationFailed) {
-            this.$cityName.innerText = "北京 (默认)";
+            this.$cityNameText.innerText = "北京 (默认)";
         } else {
-            this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
+            this.$cityNameText.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
         this._checkCityNameOverflow();
         await this._loadWeatherData(lat, lon, false);
@@ -684,16 +682,16 @@ class WeatherCard extends HTMLElement {
     }
 
     _checkCityNameOverflow() {
-        if (!this.$cityName) return;
-        const el = this.$cityName;
-        // 获取元素的 clientWidth（即固定宽度 9ch 的实际像素值）
-        const containerWidth = el.clientWidth;
-        // 获取文本内容的实际滚动宽度
-        const textWidth = el.scrollWidth;
+        if (!this.$cityNameText) return;
+        const textEl = this.$cityNameText;
+        const container = this.$cityName;
+        if (!container) return;
+        const containerWidth = container.clientWidth;
+        const textWidth = textEl.scrollWidth;
         if (textWidth > containerWidth) {
-            el.classList.add('auto-scroll');
+            textEl.classList.add('auto-scroll');
         } else {
-            el.classList.remove('auto-scroll');
+            textEl.classList.remove('auto-scroll');
         }
     }
 
@@ -829,7 +827,7 @@ class WeatherCard extends HTMLElement {
                     let cityName = data.result.formatted_address || (data.result.addressComponent?.city + data.result.addressComponent?.district) || null;
                     if (cityName && cityName !== "undefinedundefined") {
                         cityName = cityName.length > 30 ? cityName.slice(0, 28) + "…" : cityName;
-                        this.$cityName.innerText = cityName;
+                        this.$cityNameText.innerText = cityName;
                         this._checkCityNameOverflow();
                         return;
                     }
@@ -850,15 +848,15 @@ class WeatherCard extends HTMLElement {
                     const loc = data.results[0];
                     let full = (loc.name || '') + (loc.admin1 ? `, ${loc.admin1}` : '') + (loc.country ? `, ${loc.country}` : '');
                     if (full.length > 30) full = full.slice(0, 28) + '…';
-                    this.$cityName.innerText = full;
+                    this.$cityNameText.innerText = full;
                     this._checkCityNameOverflow();
                     return;
                 }
             }
-            this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
+            this.$cityNameText.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         } catch (err) {
             console.error("地理编码失败:", err);
-            this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
+            this.$cityNameText.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
         this._checkCityNameOverflow();
     }
