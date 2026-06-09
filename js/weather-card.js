@@ -449,7 +449,7 @@ class WeatherCard extends HTMLElement {
                         <span class="city-name" id="cityName">
                             <span class="city-name-text">定位中...</span>
                         </span>
-                        <span class="coords" id="coordsText">纬度: --, 经度: --</span>
+                        <span class="coords" id="coordsText">北纬--°, 东经--°</span>
                     </div>
                     <button class="refresh-icon" id="refreshWeatherBtn" title="刷新">⟳</button>
                 </div>
@@ -705,7 +705,8 @@ class WeatherCard extends HTMLElement {
     }
     this.currentLat = lat;
     this.currentLon = lon;
-    this.$coordsText.innerText = `纬度: ${lat.toFixed(2)}, 经度: ${lon.toFixed(2)}`;
+    // 使用格式化后的坐标字符串
+    this.$coordsText.innerText = this._formatCoordinate(lat, lon);
     if (locationFailed) {
       this.$cityNameText.innerText = "北京 (默认)";
     } else {
@@ -833,6 +834,16 @@ class WeatherCard extends HTMLElement {
     if (!isoString) return "--:--";
     const date = new Date(isoString);
     return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  }
+
+  // 格式化坐标显示：北纬/南纬 + 东经/西经
+  _formatCoordinate(lat, lon) {
+    if (lat === undefined || lon === undefined) return "北纬--°, 东经--°";
+    const latAbs = Math.abs(lat).toFixed(2);
+    const lonAbs = Math.abs(lon).toFixed(2);
+    const latDir = lat >= 0 ? "北纬" : "南纬";
+    const lonDir = lon >= 0 ? "东经" : "西经";
+    return `${latDir}${latAbs}°, ${lonDir}${lonAbs}°`;
   }
 
   _checkCityNameOverflow() {
@@ -977,7 +988,8 @@ class WeatherCard extends HTMLElement {
         `;
 
     this.$content.innerHTML = mainCurrent + hourlyHtml + forecastHtml;
-    this.$coordsText.innerText = `纬度: ${lat.toFixed(2)}, 经度: ${lon.toFixed(2)}`;
+    // 使用格式化后的坐标字符串
+    this.$coordsText.innerText = this._formatCoordinate(lat, lon);
 
     // 渲染完成后重新绑定拖拽滚动（因为上面 innerHTML 重建了 .hourly-scroll 和 .forecast-scroll 元素）
     this._initDragScroll();

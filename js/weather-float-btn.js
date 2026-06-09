@@ -1,5 +1,5 @@
 // weather-float-btn.js
-// 左上角悬浮按钮，控制天气卡片的显示/隐藏
+// 左下角悬浮按钮，控制天气卡片的显示/隐藏
 class WeatherFloatBtn extends HTMLElement {
     constructor() {
         super();
