@@ -2,7 +2,8 @@
 // 功能：当前天气 + 空气质量(简评) + 逐小时预报 + 未来5日预报 + 日出日落
 // 默认地点：北京 (39.9042, 116.4074)
 // 优先使用天地图反向地理编码，失败时自动回退到 Open‑Meteo Geocode API
-// 城市名过长时自动滚动显示
+// 城市名过长时自动滚动显示（固定9字符宽度）
+// 逐小时/五日预报滚动条隐藏，支持鼠标拖拽滚动（PC端）
 
 class WeatherCard extends HTMLElement {
     constructor() {
@@ -25,7 +26,7 @@ class WeatherCard extends HTMLElement {
             <style>
                 :host {
                     --primary-color: #2c7cb6;
-                    --card-bg: rgba(255, 255, 255, 0.92);
+                    --card-bg: rgba(255, 255, 255, 0.76);
                     --border-radius: 24px;
                     display: block;
                     position: fixed;
@@ -54,7 +55,7 @@ class WeatherCard extends HTMLElement {
                     justify-content: space-between;
                     align-items: center;
                     padding: 12px 18px;
-                    background: rgba(44, 124, 182, 0.15);
+                    background: rgba(5, 109, 206, 0.62);
                     cursor: move;
                     border-bottom: 1px solid rgba(255,255,255,0.3);
                     user-select: none;
@@ -165,7 +166,6 @@ class WeatherCard extends HTMLElement {
                     overflow-y: auto;
                 }
 
-                /* 当前天气区域：始终左右布局（不随屏幕变化而上下排列） */
                 .current-section {
                     display: flex;
                     flex-wrap: wrap;
@@ -264,8 +264,13 @@ class WeatherCard extends HTMLElement {
                     overflow-x: auto;
                     gap: 10px;
                     padding: 6px 2px 10px;
-                    scrollbar-width: thin;
                     -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;      /* Firefox */
+                    -ms-overflow-style: none;   /* IE/Edge */
+                    cursor: grab;
+                }
+                .hourly-scroll::-webkit-scrollbar, .forecast-scroll::-webkit-scrollbar {
+                    display: none;              /* Chrome/Safari/Opera */
                 }
                 .hour-card, .forecast-card {
                     background: white;
@@ -492,6 +497,8 @@ class WeatherCard extends HTMLElement {
             }
         };
         setTimeout(() => document.addEventListener('click', this._outsideClickHandler), 100);
+
+        // 注意：拖拽滚动绑定将在每次渲染完成后调用，这里不再调用
     }
 
     _initDrag() {
@@ -543,6 +550,55 @@ class WeatherCard extends HTMLElement {
             this.$dragHeader.addEventListener('mousedown', startDrag);
             this.$dragHeader.addEventListener('touchstart', startDrag, { passive: false });
         }
+    }
+
+    // 为滚动区域添加鼠标拖拽滚动（每次渲染后调用，确保元素存在）
+    _initDragScroll() {
+        const scrollContainers = ['.hourly-scroll', '.forecast-scroll'];
+        scrollContainers.forEach(selector => {
+            const container = this.shadowRoot.querySelector(selector);
+            if (!container) return;
+
+            // 移除旧监听避免重复（简单起见，每次重新绑定前先解绑）
+            const newContainer = container.cloneNode(true);
+            container.parentNode.replaceChild(newContainer, container);
+            // 重新获取新容器
+            const freshContainer = this.shadowRoot.querySelector(selector);
+            if (!freshContainer) return;
+
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            const onMouseDown = (e) => {
+                isDown = true;
+                startX = e.pageX - freshContainer.offsetLeft;
+                scrollLeft = freshContainer.scrollLeft;
+                freshContainer.style.cursor = 'grabbing';
+                e.preventDefault();
+            };
+            const onMouseLeave = () => {
+                isDown = false;
+                freshContainer.style.cursor = 'grab';
+            };
+            const onMouseUp = () => {
+                isDown = false;
+                freshContainer.style.cursor = 'grab';
+            };
+            const onMouseMove = (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - freshContainer.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                freshContainer.scrollLeft = scrollLeft - walk;
+            };
+
+            freshContainer.addEventListener('mousedown', onMouseDown);
+            freshContainer.addEventListener('mouseleave', onMouseLeave);
+            freshContainer.addEventListener('mouseup', onMouseUp);
+            freshContainer.addEventListener('mousemove', onMouseMove);
+            freshContainer.style.cursor = 'grab';
+        });
     }
 
     async connectedCallback() {
@@ -814,6 +870,9 @@ class WeatherCard extends HTMLElement {
 
         this.$content.innerHTML = mainCurrent + hourlyHtml + forecastHtml;
         this.$coordsText.innerText = `纬度: ${lat.toFixed(2)}, 经度: ${lon.toFixed(2)}`;
+
+        // 渲染完成后重新绑定拖拽滚动（因为上面 innerHTML 重建了 .hourly-scroll 和 .forecast-scroll 元素）
+        this._initDragScroll();
     }
 
     async _fetchLocationName(lat, lon) {
