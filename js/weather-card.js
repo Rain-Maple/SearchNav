@@ -1,7 +1,8 @@
 // weather-card.js
 // 功能：当前天气 + 空气质量(简评) + 逐小时预报 + 未来5日预报 + 日出日落
-// 默认地点：大连 (38.914, 121.6147)
+// 默认地点：北京 (39.9042, 116.4074)
 // 优先使用天地图反向地理编码，失败时自动回退到 Open‑Meteo Geocode API
+// 城市名过长时自动滚动显示
 
 class WeatherCard extends HTMLElement {
     constructor() {
@@ -102,8 +103,10 @@ class WeatherCard extends HTMLElement {
                     display: flex;
                     align-items: center;
                     gap: 10px;
-                    flex-wrap: wrap;
                     font-size: 0.85rem;
+                    flex: 1;
+                    min-width: 0;          /* 允许子元素溢出时收缩 */
+                    overflow: hidden;      /* 隐藏溢出内容，配合内部滚动 */
                 }
                 .city-name {
                     font-weight: 600;
@@ -111,14 +114,42 @@ class WeatherCard extends HTMLElement {
                     padding: 4px 12px;
                     border-radius: 30px;
                     color: #1f3a5f;
-                    display: inline-flex;
-                    align-items: center;
+                    display: inline-block;
                     line-height: 1.2;
+                    white-space: nowrap;
+                    max-width: 100%;
+                    overflow: hidden;
+                    text-overflow: clip;
+                    /* 自动滚动时禁用默认省略号 */
+                }
+                /* 自动滚动动画 */
+                .city-name.auto-scroll {
+                    animation: scrollText 10s linear infinite;
+                    padding-right: 20px;   /* 避免末尾紧贴边缘 */
+                }
+                @keyframes scrollText {
+                    0% {
+                        transform: translateX(0);
+                    }
+                    20% {
+                        transform: translateX(0);
+                    }
+                    80% {
+                        transform: translateX(calc(-100% + 100%));  /* 滚动到末端 */
+                    }
+                    100% {
+                        transform: translateX(calc(-100% + 100%));
+                    }
+                }
+                /* 保证滚动时文字可读，不影响交互 */
+                .city-name.auto-scroll:hover {
+                    animation-play-state: paused;
                 }
                 .coords {
                     font-family: monospace;
                     font-size: 0.7rem;
                     opacity: 0.7;
+                    flex-shrink: 0;
                 }
                 .refresh-icon {
                     background: rgba(44,124,182,0.15);
@@ -129,6 +160,7 @@ class WeatherCard extends HTMLElement {
                     cursor: pointer;
                     font-size: 1.1rem;
                     transition: 0.2s;
+                    flex-shrink: 0;
                 }
                 .refresh-icon:active { background: rgba(44,124,182,0.4); }
                 .refresh-icon:hover { background: #2c7cb6; color: white; transform: rotate(25deg); }
@@ -534,19 +566,21 @@ class WeatherCard extends HTMLElement {
             lat = pos.lat;
             lon = pos.lon;
         } catch (err) {
-            console.warn("定位失败，使用默认地点：大连", err.message);
-            lat = 38.914;
-            lon = 121.6147;
+            console.warn("定位失败，使用默认地点：北京", err.message);
+            // 北京坐标
+            lat = 39.9042;
+            lon = 116.4074;
             locationFailed = true;
         }
         this.currentLat = lat;
         this.currentLon = lon;
         this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
         if (locationFailed) {
-            this.$cityName.innerText = "大连 (默认)";
+            this.$cityName.innerText = "北京 (默认)";
         } else {
             this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
+        this._checkCityNameOverflow();
         await this._loadWeatherData(lat, lon, false);
         this._fetchLocationName(lat, lon).catch(() => {});
     }
@@ -649,6 +683,27 @@ class WeatherCard extends HTMLElement {
         if (!isoString) return "--:--";
         const date = new Date(isoString);
         return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+    }
+
+    _checkCityNameOverflow() {
+        if (!this.$cityName) return;
+        // 短暂延迟，确保元素已渲染出尺寸
+        setTimeout(() => {
+            const el = this.$cityName;
+            const parent = el.parentElement;
+            if (!parent) return;
+            // 获取父容器允许的最大宽度（.location-info 的宽度减去 coords 的宽度）
+            const parentWidth = parent.clientWidth;
+            const coords = this.shadowRoot.querySelector('.coords');
+            const coordsWidth = coords ? coords.offsetWidth : 0;
+            const availableWidth = parentWidth - coordsWidth - 10; // 减去 gap
+            const textWidth = el.scrollWidth;
+            if (textWidth > availableWidth) {
+                el.classList.add('auto-scroll');
+            } else {
+                el.classList.remove('auto-scroll');
+            }
+        }, 50);
     }
 
     _renderFullUI(current, hourly, daily, lat, lon) {
@@ -782,8 +837,9 @@ class WeatherCard extends HTMLElement {
                 if (data && data.status === "0" && data.result) {
                     let cityName = data.result.formatted_address || (data.result.addressComponent?.city + data.result.addressComponent?.district) || null;
                     if (cityName && cityName !== "undefinedundefined") {
-                        cityName = cityName.length > 20 ? cityName.slice(0, 18) + ".." : cityName;
+                        cityName = cityName.length > 30 ? cityName.slice(0, 28) + "…" : cityName;
                         this.$cityName.innerText = cityName;
+                        this._checkCityNameOverflow();
                         return;
                     }
                 }
@@ -802,8 +858,9 @@ class WeatherCard extends HTMLElement {
                 if (data.results && data.results.length > 0) {
                     const loc = data.results[0];
                     let full = (loc.name || '') + (loc.admin1 ? `, ${loc.admin1}` : '') + (loc.country ? `, ${loc.country}` : '');
-                    if (full.length > 28) full = full.slice(0, 26) + '..';
+                    if (full.length > 30) full = full.slice(0, 28) + '…';
                     this.$cityName.innerText = full;
+                    this._checkCityNameOverflow();
                     return;
                 }
             }
@@ -812,6 +869,7 @@ class WeatherCard extends HTMLElement {
             console.error("地理编码失败:", err);
             this.$cityName.innerText = `${lat.toFixed(1)},${lon.toFixed(1)}`;
         }
+        this._checkCityNameOverflow();
     }
 }
 
