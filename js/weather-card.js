@@ -143,6 +143,7 @@ class WeatherCard extends HTMLElement {
                     font-size: 0.7rem;
                     opacity: 0.7;
                     flex-shrink: 0;
+                    white-space: nowrap;
                 }
                 .refresh-icon {
                     background: rgba(44,124,182,0.15);
@@ -446,7 +447,7 @@ class WeatherCard extends HTMLElement {
                         <span class="city-name" id="cityName">
                             <span class="city-name-text">定位中...</span>
                         </span>
-                        <span class="coords" id="coordsText">--,--</span>
+                        <span class="coords" id="coordsText">纬度: --, 经度: --</span>
                     </div>
                     <button class="refresh-icon" id="refreshWeatherBtn" title="刷新">⟳</button>
                 </div>
@@ -570,7 +571,7 @@ class WeatherCard extends HTMLElement {
         }
         this.currentLat = lat;
         this.currentLon = lon;
-        this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+        this.$coordsText.innerText = `纬度: ${lat.toFixed(2)}, 经度: ${lon.toFixed(2)}`;
         if (locationFailed) {
             this.$cityNameText.innerText = "北京 (默认)";
         } else {
@@ -812,7 +813,7 @@ class WeatherCard extends HTMLElement {
         `;
 
         this.$content.innerHTML = mainCurrent + hourlyHtml + forecastHtml;
-        this.$coordsText.innerText = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+        this.$coordsText.innerText = `纬度: ${lat.toFixed(2)}, 经度: ${lon.toFixed(2)}`;
     }
 
     async _fetchLocationName(lat, lon) {
