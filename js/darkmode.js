@@ -62,7 +62,7 @@
             width: 25px;
             height: 25px;
             border-radius: 50%;
-            background: rgb(210, 222, 231);
+            background: rgb(255, 255, 255, 0.8);
             border: none;
             // color: white;
             font-size: 14px;
@@ -71,8 +71,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            // box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            // transition: all 0.3s ease;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+                0 1px 16px rgba(0, 0, 0, 0.3);
+            // transition: all 0.3s ease; 
         `;
         
         // 单击：手动切换
