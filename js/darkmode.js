@@ -57,8 +57,8 @@
         // ========== 按钮样式（修改这里） ==========
         button.style.cssText = `
             position: fixed;
-            bottom: 30px;      /* 距离底部距离，改大往上移，改小往下移 */
-            right: 30px;       /* 距离右侧距离，改大往左移，改小往右移 */
+            bottom: 10px;      /* 距离底部距离，改大往上移，改小往下移 */
+            right: 10px;       /* 距离右侧距离，改大往左移，改小往右移 */
             width: 50px;
             height: 50px;
             border-radius: 50%;
