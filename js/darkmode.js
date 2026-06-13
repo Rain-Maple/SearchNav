@@ -68,10 +68,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset,
-                0 1px 16px rgba(0, 0, 0, 0.3);
-            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
-            transition: background-color 0.3s, color 0.3s;
         `;
         
         // 单击：手动切换
