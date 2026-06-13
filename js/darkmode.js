@@ -59,8 +59,8 @@
             position: fixed;
             bottom: 10px;      /* 距离底部距离，改大往上移，改小往下移 */
             right: 10px;       /* 距离右侧距离，改大往左移，改小往右移 */
-            width: 50px;
-            height: 50px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: var(--bg-secondary, #2196F3);
             border: none;
