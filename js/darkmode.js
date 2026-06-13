@@ -54,6 +54,27 @@
         button.setAttribute('aria-label', '切换深色模式 | 双击重置');
         button.innerHTML = getCurrentTheme() === 'dark' ? '☀️' : '🌙';
         
+        // ========== 按钮样式（修改这里） ==========
+        button.style.cssText = `
+            position: fixed;
+            bottom: 30px;      /* 距离底部距离，改大往上移，改小往下移 */
+            right: 30px;       /* 距离右侧距离，改大往左移，改小往右移 */
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-secondary, #2196F3);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        `;
+        
         // 单击：手动切换
         button.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
