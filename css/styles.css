@@ -186,6 +186,7 @@ body::before {
 
 .engine-option span {
     font-size: 12px;
+    text-shadow: var(--text-edge);
 }
 
 .engine-option:hover {
@@ -206,6 +207,7 @@ body::before {
     height: 100%;
     line-height: 46px;
     color: var(--engine-text);
+    text-shadow: var(--engine-text)
 }
 
 .search-input::placeholder {
@@ -265,6 +267,7 @@ body::before {
     color: var(--text-primary);
     transition: background-color 0.2s;
     border-bottom: 1px solid var(--border-light);
+    text-shadow: var(--text-edge);
 }
 
 .suggestion-item:last-child {
