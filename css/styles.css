@@ -457,7 +457,7 @@ body::before {
     background: rgba(255, 255, 255, 0.25);
 }
 
-/* Emoji 图标样式（与普通图标一致） */
+/* Emoji 图标样式 */
 .nav-icon.emoji-icon {
     font-size: 24px !important;
     line-height: 1 !important;
