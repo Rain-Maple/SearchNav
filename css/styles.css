@@ -457,6 +457,35 @@ body::before {
     background: rgba(255, 255, 255, 0.25);
 }
 
+/* Emoji 图标样式（与普通图标一致） */
+.nav-icon.emoji-icon {
+    font-size: 24px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 6px;
+    padding: 8px;
+    transition: all 0.2s;
+}
+
+[data-theme="dark"] .nav-icon.emoji-icon {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.nav-item:hover .nav-icon.emoji-icon {
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .nav-item:hover .nav-icon.emoji-icon {
+    background: rgba(255, 255, 255, 0.25);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
