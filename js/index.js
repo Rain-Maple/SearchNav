@@ -6,7 +6,7 @@
     // 搜索引擎配置
     // 使用Object.freeze()来防止对象被修改
     const ENGINES = Object.freeze({
-        bing: { icon: 'images/bing.svg', url: 'https://www.bing.com/search?q=' },
+        bing: { icon: 'images/bing.svg', url: 'https://cn.bing.com/search?q=' },
         baidu: { icon: 'images/baidu.svg', url: 'https://www.baidu.com/s?wd=' },
         google: { icon: 'images/google.svg', url: 'https://www.google.com/search?q=' },
         zhihu: { icon: 'images/zhihu.svg', url: 'https://www.zhihu.com/search?q=' },
