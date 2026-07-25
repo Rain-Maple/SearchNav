@@ -92,6 +92,11 @@ body::before {
     color: var(--clock-text);
 }
 
+.lunar {
+    font-size: 18px;
+    color: var(--clock-text);
+}
+
 /* 搜索容器 */
 .search-container {
     margin: 0 auto;
