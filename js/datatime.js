@@ -71,7 +71,7 @@ function updateClock() {
         }
         
         // 构建农历日期字符串
-        let lunarStr = `农历 ${yearName}年${monthName}月${dayName}日`;
+        let lunarStr = `农历 ${monthName}月${dayName}日`;
         
         // 添加生肖
         if (zodiac) {
