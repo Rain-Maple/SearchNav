@@ -11,7 +11,7 @@
         google: { icon: 'images/google.svg', url: 'https://www.google.com/search?q=' },
         zhihu: { icon: 'images/zhihu.svg', url: 'https://www.zhihu.com/search?q=' },
         sogou: { icon: 'images/sogou.svg', url: 'https://www.sogou.com/web?query=' },
-        toutiao: { icon: 'images/toutiao.svg', url: 'https://www.toutiao.com/search?keyword=' },
+        toutiao: { icon: 'images/toutiao.svg', url: 'https://so.toutiao.com/search?dvpf=pc&source=input&keyword=' },
         360: { icon: 'images/360.svg', url: 'https://www.so.com/s?q=' }
     });
 
