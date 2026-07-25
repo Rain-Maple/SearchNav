@@ -43,46 +43,77 @@ function updateClock() {
         
         const lunar = LunarObj.fromDate(now);
         
-        // 获取农历信息
-        let yearName, monthName, dayName, zodiac;
+        // 获取农历信息 - 使用多种方法
+        let yearName = '未知', monthName = '未知', dayName = '未知', zodiac = null;
         
+        // 获取年份
         if (typeof lunar.getYear === 'function') {
             yearName = lunar.getYear();
         } else if (typeof lunar.year === 'function') {
             yearName = lunar.year();
-        } else {
-            yearName = '未知';
+        } else if (typeof lunar.getYearName === 'function') {
+            yearName = lunar.getYearName();
         }
         
+        // 获取月份
         if (typeof lunar.getMonth === 'function') {
             monthName = lunar.getMonth();
         } else if (typeof lunar.month === 'function') {
             monthName = lunar.month();
-        } else {
-            monthName = '未知';
+        } else if (typeof lunar.getMonthName === 'function') {
+            monthName = lunar.getMonthName();
         }
         
+        // 获取日期
         if (typeof lunar.getDay === 'function') {
             dayName = lunar.getDay();
         } else if (typeof lunar.day === 'function') {
             dayName = lunar.day();
-        } else {
-            dayName = '未知';
+        } else if (typeof lunar.getDayName === 'function') {
+            dayName = lunar.getDayName();
         }
         
+        // 获取生肖 - 多种方法尝试
         if (typeof lunar.getZodiac === 'function') {
             zodiac = lunar.getZodiac();
         } else if (typeof lunar.zodiac === 'function') {
             zodiac = lunar.zodiac();
-        } else {
-            zodiac = null;
+        } else if (typeof lunar.getZodiacName === 'function') {
+            zodiac = lunar.getZodiacName();
+        } else if (typeof lunar.getYearZodiac === 'function') {
+            zodiac = lunar.getYearZodiac();
+        } else if (typeof lunar.getAnimal === 'function') {
+            zodiac = lunar.getAnimal();
+        } else if (typeof lunar.animal === 'function') {
+            zodiac = lunar.animal();
+        } else if (typeof lunar.getShengXiao === 'function') {
+            zodiac = lunar.getShengXiao();
+        }
+        
+        // 如果以上方法都失败，尝试直接从对象属性获取
+        if (!zodiac && lunar.zodiac !== undefined) {
+            zodiac = lunar.zodiac;
+        }
+        if (!zodiac && lunar.animal !== undefined) {
+            zodiac = lunar.animal;
         }
         
         // 构建农历日期字符串
         lunarStr = `农历 ${monthName}月${dayName}日`;
         
+        // 添加生肖
         if (zodiac) {
             lunarStr += ` (${zodiac}年)`;
+        } else {
+            // 如果仍然获取不到生肖，尝试通过年份计算
+            try {
+                const year = now.getFullYear();
+                const zodiacs = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+                const calculatedZodiac = zodiacs[(year - 4) % 12];
+                lunarStr += ` (${calculatedZodiac}年)`;
+            } catch (e) {
+                lunarStr += ` (未知年)`;
+            }
         }
         
     } catch (error) {
@@ -112,9 +143,12 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         script.onerror = function() {
             console.error('Lunar库加载失败');
-            document.getElementById('show_lunar').textContent = '农历功能不可用';
+            document.getElementById('show_date').textContent = '农历功能不可用';
         };
         document.head.appendChild(script);
+    } else {
+        // 输出Lunar对象的方法用于调试
+        console.log('Lunar对象已加载，可用方法:', Object.getOwnPropertyNames(LunarObj.prototype || {}));
     }
     
     // 立即更新时间
