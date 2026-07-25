@@ -35,17 +35,9 @@ function lunarMonthToChinese(month) {
     return month;
 }
 
-function updateClock() {
+// 获取并更新日期信息（只在页面加载时执行）
+function updateDateInfo() {
     const now = new Date();
-    
-    // 格式化时间
-    const timeOptions = {
-        hour12: false,
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit'
-    };
-    const formattedTime = now.toLocaleTimeString('zh-CN', timeOptions);
     
     // 分别获取公历日期和星期
     const dateOptions = {
@@ -145,9 +137,21 @@ function updateClock() {
     // 合并显示：公历 + 空格 + 星期 + 空格 + 农历
     const combinedDisplay = `${formattedDate} ${formattedWeek} ${lunarStr}`;
     
-    // 更新显示内容
-    document.getElementById('show_time').textContent = formattedTime;
+    // 更新日期显示
     document.getElementById('show_date').textContent = combinedDisplay;
+}
+
+// 更新时间（每秒执行）
+function updateTime() {
+    const now = new Date();
+    const timeOptions = {
+        hour12: false,
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+    const formattedTime = now.toLocaleTimeString('zh-CN', timeOptions);
+    document.getElementById('show_time').textContent = formattedTime;
 }
 
 // 页面加载完成后初始化
@@ -160,27 +164,24 @@ document.addEventListener('DOMContentLoaded', function() {
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lunar-javascript/1.6.10/lunar.min.js';
         script.onload = function() {
             console.log('Lunar库重新加载成功');
-            updateClock();
+            // 库加载成功后更新日期
+            updateDateInfo();
+            updateTime();
         };
         script.onerror = function() {
             console.error('Lunar库加载失败');
             document.getElementById('show_date').textContent = '农历功能不可用';
+            updateTime();
         };
         document.head.appendChild(script);
     } else {
         console.log('Lunar库已加载');
-        // 测试农历转换
-        try {
-            const testLunar = LunarObj.fromDate(new Date());
-            console.log('测试农历对象:', testLunar);
-            console.log('可用方法:', Object.getOwnPropertyNames(Object.getPrototypeOf(testLunar)));
-        } catch(e) {
-            console.log('测试失败:', e);
-        }
+        // 更新日期（只在页面加载时执行一次）
+        updateDateInfo();
+        // 更新时间
+        updateTime();
     }
     
-    // 立即更新时间
-    updateClock();
-    // 每秒更新一次
-    setInterval(updateClock, 1000);
+    // 每秒更新时间（不更新日期）
+    setInterval(updateTime, 1000);
 });
