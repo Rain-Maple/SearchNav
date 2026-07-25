@@ -20,14 +20,18 @@ function updateClock() {
     };
     const formattedTime = now.toLocaleTimeString('zh-CN', timeOptions);
     
-    // 格式化日期（公历 + 星期）
+    // 分别获取公历日期和星期
     const dateOptions = {
-        weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     };
     const formattedDate = now.toLocaleDateString('zh-CN', dateOptions);
+    
+    const weekOptions = {
+        weekday: 'long'
+    };
+    const formattedWeek = now.toLocaleDateString('zh-CN', weekOptions);
     
     // 获取农历日期
     let lunarStr = '';
@@ -86,8 +90,8 @@ function updateClock() {
         lunarStr = '农历日期获取失败';
     }
     
-    // 合并显示：公历 + 空格 + 农历
-    const combinedDisplay = `${formattedDate}  ${lunarStr}`;
+    // 合并显示：公历 + 空格 + 星期 + 空格 + 农历
+    const combinedDisplay = `${formattedDate} ${formattedWeek} ${lunarStr}`;
     
     // 更新显示内容
     document.getElementById('show_time').textContent = formattedTime;
