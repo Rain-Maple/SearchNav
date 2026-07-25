@@ -88,11 +88,6 @@ body::before {
 
 .date {
     font-size: 22px;
-    color: var(--clock-text);
-}
-
-.lunar {
-    font-size: 18px;
     margin-bottom: 16px;
     color: var(--clock-text);
 }

@@ -7,8 +7,10 @@ function getLunarInstance() {
     }
     return null;
 }
+
 function updateClock() {
     const now = new Date();
+    
     // 格式化时间
     const timeOptions = {
         hour12: false,
@@ -17,7 +19,8 @@ function updateClock() {
         second: '2-digit'
     };
     const formattedTime = now.toLocaleTimeString('zh-CN', timeOptions);
-    // 格式化日期（公历）
+    
+    // 格式化日期（公历 + 星期）
     const dateOptions = {
         weekday: 'long',
         year: 'numeric',
@@ -25,7 +28,9 @@ function updateClock() {
         day: 'numeric'
     };
     const formattedDate = now.toLocaleDateString('zh-CN', dateOptions);
+    
     // 获取农历日期
+    let lunarStr = '';
     try {
         const LunarObj = getLunarInstance();
         if (!LunarObj) {
@@ -34,10 +39,9 @@ function updateClock() {
         
         const lunar = LunarObj.fromDate(now);
         
-        // 获取农历信息 - 使用调试版本中确认有效的方法
+        // 获取农历信息
         let yearName, monthName, dayName, zodiac;
         
-        // 尝试不同的方法名
         if (typeof lunar.getYear === 'function') {
             yearName = lunar.getYear();
         } else if (typeof lunar.year === 'function') {
@@ -71,23 +75,25 @@ function updateClock() {
         }
         
         // 构建农历日期字符串
-        let lunarStr = `农历 ${monthName}月${dayName}日`;
+        lunarStr = `农历 ${monthName}月${dayName}日`;
         
-        // 添加生肖
         if (zodiac) {
             lunarStr += ` (${zodiac}年)`;
         }
         
-        document.getElementById('show_lunar').textContent = lunarStr;
-        
     } catch (error) {
         console.error('农历转换错误:', error);
-        document.getElementById('show_lunar').textContent = '农历日期获取失败';
+        lunarStr = '农历日期获取失败';
     }
+    
+    // 合并显示：公历 + 空格 + 农历
+    const combinedDisplay = `${formattedDate}  ${lunarStr}`;
+    
     // 更新显示内容
     document.getElementById('show_time').textContent = formattedTime;
-    document.getElementById('show_date').textContent = formattedDate;
+    document.getElementById('show_date').textContent = combinedDisplay;
 }
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     // 检查库是否加载
