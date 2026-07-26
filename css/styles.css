@@ -87,7 +87,7 @@ body::before {
 }
 
 .date {
-    font-size: 20px;
+    font-size: 22px;
     margin-bottom: 16px;
     color: var(--clock-text);
 }
