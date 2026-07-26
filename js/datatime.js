@@ -71,7 +71,7 @@
             // 生肖
             const zodiac = lunar.getYearShengXiao();
 
-            lunarElem.textContent = `农历 ${monthChinese}月${dayChinese}日 (${zodiac}年)`;
+            lunarElem.textContent = `农历 ${monthChinese}月${dayChinese} | ${zodiac}年`;
         } catch (error) {
             console.error('更新农历信息失败:', error);
             lunarElem.textContent = '农历信息不可用';
