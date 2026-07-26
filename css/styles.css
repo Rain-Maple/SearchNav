@@ -88,15 +88,8 @@ body::before {
 
 .date {
     font-size: 22px;
+    margin-bottom: 6px;
     color: var(--clock-text);
-}
-
-.separator {
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    margin: 15px auto;
-    border-radius: 2px;
 }
 
 .lunar {
