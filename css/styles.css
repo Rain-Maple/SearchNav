@@ -460,7 +460,7 @@ body::before {
 }
 
 [data-theme="dark"] .nav-item:hover .nav-icon {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(69, 69, 69, 0.9);
 }
 
 /* Emoji 图标样式 */
