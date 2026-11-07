@@ -1,6 +1,10 @@
 /**
  * 构建脚本：抓取 index.html 中所有 api.xinac.net 的网站图标并本地化
  * 输出：dist/ 目录（包含重写后的 index.html、图标、css、js、本地资源）
+ *
+ * 改进点：
+ *   - 用 magic bytes 检测真实图片格式，避免服务器 Content-Type 标错导致扩展名错误
+ *   - <link rel="icon"> 解析改为多标签打分，优先 ico / shortcut icon
  */
 const fs = require('fs');
 const fsp = require('fs/promises');
@@ -13,11 +17,8 @@ const SRC_HTML = path.join(ROOT, 'index.html');
 const DIST = path.join(ROOT, 'dist');
 const DIST_ICONS = path.join(DIST, 'images', 'icons');
 
-// 匹配形如 https://api.xinac.net/icon/?url=www.baidu.com/
-// 捕获组 1 = 域名（不含末尾斜杠、引号、&等）
 const ICON_API_PATTERN = /https?:\/\/api\.xinac\.net\/icon\/\?url=([^"'&\s/]+)/g;
 
-// 内置占位图标（灰底问号 SVG）
 const PLACEHOLDER_SVG = Buffer.from(
   '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">' +
   '<rect width="64" height="64" rx="12" fill="#e0e0e0"/>' +
@@ -57,7 +58,35 @@ function httpGet(url, { timeout = 10000, maxRedirects = 3 } = {}) {
   });
 }
 
-// ---------- Content-Type → 扩展名 ----------
+// ---------- 【新增】通过文件头检测真实图片格式 ----------
+function detectImageType(buffer) {
+  if (!buffer || buffer.length < 4) return null;
+
+  // ICO:  00 00 01 00
+  if (buffer[0] === 0x00 && buffer[1] === 0x00 && buffer[2] === 0x01 && buffer[3] === 0x00) return '.ico';
+  // CUR:  00 00 02 00（游标文件，与 ico 同源，按 ico 处理）
+  if (buffer[0] === 0x00 && buffer[1] === 0x00 && buffer[2] === 0x02 && buffer[3] === 0x00) return '.ico';
+  // PNG:  89 50 4E 47 0D 0A 1A 0A
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return '.png';
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return '.jpg';
+  // GIF:  47 49 46 38（GIF8）
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return '.gif';
+  // WEBP: RIFF....WEBP
+  if (buffer.length >= 12 &&
+      buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return '.webp';
+  // BMP:  42 4D
+  if (buffer[0] === 0x42 && buffer[1] === 0x4D) return '.bmp';
+
+  // SVG 是文本，检测头部
+  const head = buffer.slice(0, 512).toString('utf8').toLowerCase();
+  if (head.includes('<svg') || (head.includes('<?xml') && head.includes('svg'))) return '.svg';
+
+  return null;
+}
+
+// ---------- Content-Type → 扩展名（作为 magic bytes 检测的补充） ----------
 function extFromContentType(ct) {
   ct = (ct || '').toLowerCase();
   if (ct.includes('svg')) return '.svg';
@@ -69,20 +98,43 @@ function extFromContentType(ct) {
   return '.png';
 }
 
-// ---------- 从页面 HTML 中解析 <link rel="icon"> ----------
-function extractIconLink(html, origin) {
-  const patterns = [
-    /<link[^>]+rel=["'](?:shortcut\s+icon|icon)["'][^>]+href=["']([^"']+)["']/i,
-    /<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:shortcut\s+icon|icon)["']/i,
-    /<link[^>]+rel=["']apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
-  ];
-  for (const re of patterns) {
-    const m = html.match(re);
-    if (m) {
-      try { return new URL(m[1], origin).href; } catch { /* ignore */ }
+// ---------- 【重写】从页面 HTML 中按优先级解析所有 icon 链接 ----------
+function extractIconLinks(html, origin) {
+  const results = [];
+  // 匹配所有 <link ...>
+  const linkRe = /<link\b[^>]*>/gi;
+  let m;
+  while ((m = linkRe.exec(html)) !== null) {
+    const tag = m[0];
+    const rel = (tag.match(/\brel\s*=\s*["']([^"']+)["']/i) || [])[1];
+    const href = (tag.match(/\bhref\s*=\s*["']([^"']+)["']/i) || [])[1];
+    const type = (tag.match(/\btype\s*=\s*["']([^"']+)["']/i) || [])[1];
+    if (!rel || !href) continue;
+
+    const relLower = rel.toLowerCase();
+    if (!relLower.includes('icon')) continue;
+
+    let abs;
+    try { abs = new URL(href, origin).href; } catch { continue; }
+
+    let score = 0;
+    if (relLower.includes('shortcut') && relLower.includes('icon')) score = 100;      // shortcut icon 最优先
+    else if (relLower === 'icon') score = 80;                                          // 普通 icon
+    else if (relLower.includes('apple-touch-icon')) score = 20;                        // touch icon 最后
+
+    if (type) {
+      const tl = type.toLowerCase();
+      if (tl.includes('x-icon') || tl.includes('vnd.microsoft.icon')) score += 15;     // 明确 ico
+      else if (tl.includes('svg')) score += 10;
+      else if (tl.includes('png')) score += 5;
     }
+
+    results.push({ href: abs, score, type: type || '' });
   }
-  return null;
+
+  // 按分数降序排列
+  results.sort((a, b) => b.score - a.score);
+  return results.map((r) => r.href);
 }
 
 // ---------- 为一个域名抓取图标 ----------
@@ -90,50 +142,70 @@ async function fetchIcon(domain) {
   const origin = `https://${domain}`;
   const candidates = [];
 
-  // 1) 访问首页，解析 HTML 中的 <link rel="icon">
+  // 1) 访问首页，收集所有 icon link（按优先级排序）
   try {
     const page = await httpGet(origin, { timeout: 8000 });
-    const iconLink = extractIconLink(page.buffer.toString('utf8'), origin);
-    if (iconLink) candidates.push(iconLink);
+    const links = extractIconLinks(page.buffer.toString('utf8'), origin);
+    for (const l of links) candidates.push(l);
   } catch (err) {
     console.warn(`  [warn] 无法访问 ${domain} 首页: ${err.message}`);
   }
 
-  // 2) 常见回退路径
+  // 2) 补充常见路径
   candidates.push(`${origin}/favicon.ico`);
   candidates.push(`${origin}/favicon.png`);
   candidates.push(`${origin}/apple-touch-icon.png`);
 
-  for (const url of candidates) {
+  // 去重
+  const seen = new Set();
+  const uniqueCandidates = candidates.filter((u) => {
+    if (seen.has(u)) return false;
+    seen.add(u);
+    return true;
+  });
+
+  // 3) 按顺序尝试，取第一个成功下载的
+  for (const url of uniqueCandidates) {
     try {
       const res = await httpGet(url, { timeout: 8000 });
       if (res.buffer.length > 0) {
+        // 【关键】优先用 magic bytes 检测真实格式
+        const detectedExt = detectImageType(res.buffer);
+        const contentTypeExt = extFromContentType(res.headers['content-type']);
+        const ext = detectedExt || contentTypeExt;
+
         return {
           buffer: res.buffer,
-          ext: extFromContentType(res.headers['content-type']),
+          ext,
           source: url,
+          actualFormat: detectedExt,        // 真实检测到的格式（可能为 null）
+          contentType: res.headers['content-type'],
         };
       }
     } catch { /* 尝试下一个 */ }
   }
 
-  // 3) Google favicon 服务兜底（仅构建时一次性请求）
+  // 4) Google 兜底
   try {
     const googleUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
     const res = await httpGet(googleUrl, { timeout: 8000 });
     if (res.buffer.length > 0) {
+      const detectedExt = detectImageType(res.buffer);
+      const ext = detectedExt || extFromContentType(res.headers['content-type']);
       return {
         buffer: res.buffer,
-        ext: extFromContentType(res.headers['content-type']),
+        ext,
         source: googleUrl,
         isFallback: true,
+        actualFormat: detectedExt,
+        contentType: res.headers['content-type'],
       };
     }
   } catch (err) {
     console.warn(`  [warn] Google 兜底失败 ${domain}: ${err.message}`);
   }
 
-  // 4) 使用内置占位图
+  // 5) 内置占位图
   return { buffer: PLACEHOLDER_SVG, ext: '.svg', source: 'placeholder' };
 }
 
@@ -154,10 +226,9 @@ async function copyDir(src, dest, exclude = new Set()) {
 async function main() {
   console.log('🚀 开始构建：本地化网站图标...');
 
-  // 读取源 HTML
   const html = await fsp.readFile(SRC_HTML, 'utf8');
 
-  // 1) 收集所有需要下载的域名
+  // 收集所有需要下载的域名
   const domains = new Set();
   const scanRe = new RegExp(ICON_API_PATTERN.source, 'g');
   let match;
@@ -167,7 +238,6 @@ async function main() {
   const domainList = Array.from(domains);
   console.log(`📋 发现 ${domainList.length} 个域名需要下载图标`);
 
-  // 2) 并发下载（最多 6 并发）
   await fsp.mkdir(DIST_ICONS, { recursive: true });
   await fsp.writeFile(path.join(DIST_ICONS, 'default.svg'), PLACEHOLDER_SVG);
 
@@ -183,7 +253,13 @@ async function main() {
         const filename = `${domain}${icon.ext}`;
         await fsp.writeFile(path.join(DIST_ICONS, filename), icon.buffer);
         domainExtMap.set(domain, icon.ext);
-        console.log(`  ✅ ${domain} -> ${filename} (${icon.buffer.length}B)${icon.isFallback ? ' [Google兜底]' : ''}`);
+
+        // 日志中附上实际格式与 Content-Type，便于排查
+        const detail = icon.actualFormat
+          ? `实际:${icon.actualFormat}`
+          : `按ContentType:${icon.contentType || '未知'}`;
+        const tag = icon.isFallback ? ' [Google兜底]' : icon.source === 'placeholder' ? ' [占位图]' : '';
+        console.log(`  ✅ ${domain} -> ${filename} (${icon.buffer.length}B, ${detail})${tag}`);
       } catch (err) {
         console.error(`  ❌ ${domain}: ${err.message}`);
         domainExtMap.set(domain, '.svg');
@@ -193,7 +269,7 @@ async function main() {
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-  // 3) 重写 HTML 中的图标 src
+  // 重写 HTML
   const rewrittenHtml = html.replace(
     new RegExp(ICON_API_PATTERN.source, 'g'),
     (_full, domain) => {
@@ -204,13 +280,12 @@ async function main() {
   await fsp.writeFile(path.join(DIST, 'index.html'), rewrittenHtml);
   console.log('📄 已生成 dist/index.html');
 
-  // 4) 复制静态资源
+  // 复制静态资源
   for (const dir of ['css', 'js', 'images']) {
     const src = path.join(ROOT, dir);
     if (!fs.existsSync(src)) continue;
     const dest = path.join(DIST, dir);
     if (dir === 'images') {
-      // 复制 images/ 但跳过 icons 子目录（避免覆盖刚下载的图标）
       await copyDir(src, dest, new Set(['icons']));
     } else {
       await copyDir(src, dest);
@@ -218,7 +293,6 @@ async function main() {
     console.log(`📁 已复制 ${dir}/`);
   }
 
-  // 5) 复制 favicon.ico（如果存在）
   const faviconSrc = path.join(ROOT, 'favicon.ico');
   if (fs.existsSync(faviconSrc)) {
     await fsp.copyFile(faviconSrc, path.join(DIST, 'favicon.ico'));
