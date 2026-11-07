@@ -185,25 +185,27 @@ async function fetchIcon(domain) {
     } catch { /* 尝试下一个 */ }
   }
 
-  // 4) Google 兜底
-  try {
-    const googleUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
-    const res = await httpGet(googleUrl, { timeout: 8000 });
-    if (res.buffer.length > 0) {
-      const detectedExt = detectImageType(res.buffer);
-      const ext = detectedExt || extFromContentType(res.headers['content-type']);
-      return {
-        buffer: res.buffer,
-        ext,
-        source: googleUrl,
-        isFallback: true,
-        actualFormat: detectedExt,
-        contentType: res.headers['content-type'],
-      };
+  // 4) Google 兜底（使用新版 faviconV2 接口）
+    try {
+        const size = 64; // 可根据需要调整为 16 / 32 / 64 / 128 / 256
+        const googleUrl = `https://t0.gstatic.cn/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(domain)}&size=${size}`;
+
+        const res = await httpGet(googleUrl, { timeout: 8000 });
+        if (res.buffer.length > 0) {
+            const detectedExt = detectImageType(res.buffer);
+            const ext = detectedExt || extFromContentType(res.headers['content-type']);
+            return {
+                buffer: res.buffer,
+                ext,
+                source: googleUrl,
+                isFallback: true,
+                actualFormat: detectedExt,
+                contentType: res.headers['content-type'],
+            };
+        }
+    } catch (err) {
+        console.warn(`  [warn] Google 兜底失败 ${domain}: ${err.message}`);
     }
-  } catch (err) {
-    console.warn(`  [warn] Google 兜底失败 ${domain}: ${err.message}`);
-  }
 
   // 5) 内置占位图
   return { buffer: PLACEHOLDER_SVG, ext: '.svg', source: 'placeholder' };
