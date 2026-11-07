@@ -459,10 +459,6 @@ body::before {
     transform: translateY(-2px);
 }
 
-[data-theme="dark"] .nav-item:hover .nav-icon {
-    background: rgba(69, 69, 69, 0.9);
-}
-
 /* Emoji 图标样式 */
 .nav-icon.emoji-icon {
     font-size: 24px !important;
