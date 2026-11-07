@@ -1,0 +1,11 @@
+{
+    "name": "dhx-nav",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "node scripts/fetch-icons.js"
+    },
+    "dependencies": {
+        "axios": "^1.6.0"
+    }
+}
