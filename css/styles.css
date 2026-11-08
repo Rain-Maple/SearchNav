@@ -461,15 +461,15 @@ body::before {
 
 /* Emoji 图标样式 */
 .nav-icon.emoji-icon {
-    font-size: 24px !important;
+    font-size: 48px !important;
     line-height: 1 !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
     margin: 0 auto 6px;
     padding: 8px;
     transition: all 0.2s;
